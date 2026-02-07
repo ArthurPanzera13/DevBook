@@ -29,7 +29,7 @@ func CriarUsuario(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	if err = usuario.Preparar(); err != nil {
+	if err = usuario.Preparar("cadastro"); err != nil {
 		respostas.Erro(w, http.StatusBadRequest, err)
 		return
 	}
@@ -109,7 +109,47 @@ func BuscarUsuario(w http.ResponseWriter, r *http.Request) {
 // Atualiza um usuário no banco de dados
 func AtualizarUsuario(w http.ResponseWriter, r *http.Request) {
 
-	w.Write([]byte("Atualizando usuário"))
+	parametros := mux.Vars(r)
+
+	id, err := strconv.ParseInt(parametros["usuarioId"], 10, 32)
+	if err != nil {
+		respostas.Erro(w, http.StatusInternalServerError, err)
+		return
+	}
+
+	corpoDaRequisicao, err := io.ReadAll(r.Body)
+	if err != nil {
+		respostas.Erro(w, http.StatusUnprocessableEntity, err)
+		return
+	}
+
+	var usuario models.Usuario
+	if err = json.Unmarshal(corpoDaRequisicao, &usuario); err != nil {
+		respostas.Erro(w, http.StatusBadRequest, err)
+		return
+	}
+
+	if err = usuario.Preparar("edicao"); err != nil {
+		respostas.Erro(w, http.StatusBadRequest, err)
+		return
+	}
+
+	db, err := banco.Conectar()
+	if err != nil {
+		respostas.Erro(w, http.StatusInternalServerError, err)
+		return
+	}
+
+	defer db.Close()
+
+	repositorio := repository.NovoRepositorioDeUsuarios(db)
+	err = repositorio.AtualizaUsuarioPorID(uint64(id), usuario)
+	if err != nil {
+		respostas.Erro(w, http.StatusInternalServerError, err)
+		return
+	}
+
+	respostas.JSON(w, http.StatusOK, usuario)
 
 }
 
