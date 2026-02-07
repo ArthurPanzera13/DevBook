@@ -3,6 +3,7 @@ package repository
 import (
 	"api/src/models"
 	"database/sql"
+	"fmt"
 )
 
 type usuarios struct {
@@ -33,4 +34,32 @@ func (repositorio usuarios) Criar(usuario models.Usuario) (uint64, error) {
 	}
 
 	return uint64(ultimoID), nil
+}
+
+// Consulta todos os usuários que atendem ao filtro de nome ou nickname
+func (respositorio usuarios) Buscar(nomeOuNick string) ([]models.Usuario, error) {
+	nomeOuNick = fmt.Sprintf("%%%s%%", nomeOuNick)
+
+	statemant, err := respositorio.db.Prepare("SELECT id, nome, nickname, email FROM USUARIOS WHERE LOWER (nome) LIKE ? OR LOWER(nickname) LIKE ?")
+	if err != nil {
+		return nil, err
+	}
+
+	defer statemant.Close()
+
+	linhas, err := statemant.Query(nomeOuNick, nomeOuNick)
+	if err != nil {
+		return nil, err
+	}
+
+	var usuariosRetornados []models.Usuario
+	for linhas.Next() {
+		var usuario models.Usuario
+		if err = linhas.Scan(&usuario.ID, &usuario.Nome, &usuario.Nick, &usuario.Email); err != nil {
+			return nil, err
+		}
+
+		usuariosRetornados = append(usuariosRetornados, usuario)
+	}
+	return usuariosRetornados, nil
 }
