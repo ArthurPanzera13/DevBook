@@ -63,3 +63,18 @@ func (respositorio usuarios) Buscar(nomeOuNick string) ([]models.Usuario, error)
 	}
 	return usuariosRetornados, nil
 }
+
+// Buscar usuário por ID
+func (repositorio usuarios) BuscarPorID(id uint64) (models.Usuario, error) {
+	statemant, err := repositorio.db.Prepare("SELECT id, nome, nickname, email FROM USUARIOS WHERE id = ?")
+	if err != nil {
+		return models.Usuario{}, err
+	}
+
+	defer statemant.Close()
+
+	var usuario models.Usuario
+	err = statemant.QueryRow(id).Scan(&usuario.ID, &usuario.Nome, &usuario.Nick, &usuario.Email)
+
+	return usuario, nil
+}

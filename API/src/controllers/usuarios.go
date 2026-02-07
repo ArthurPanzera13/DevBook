@@ -8,7 +8,10 @@ import (
 	"encoding/json"
 	"io"
 	"net/http"
+	"strconv"
 	"strings"
+
+	"github.com/gorilla/mux"
 )
 
 // Insere um usuário no banco de dados
@@ -76,7 +79,30 @@ func BuscarUsuarios(w http.ResponseWriter, r *http.Request) {
 // Busca um usuário específico no banco de dados
 func BuscarUsuario(w http.ResponseWriter, r *http.Request) {
 
-	w.Write([]byte("Busca usuário"))
+	parametros := mux.Vars(r)
+
+	id, err := strconv.ParseInt(parametros["usuarioId"], 10, 32)
+	if err != nil {
+		respostas.Erro(w, http.StatusBadRequest, err)
+		return
+	}
+
+	db, err := banco.Conectar()
+	if err != nil {
+		respostas.Erro(w, http.StatusInternalServerError, err)
+		return
+	}
+
+	defer db.Close()
+
+	repositorio := repository.NovoRepositorioDeUsuarios(db)
+	usuario, err := repositorio.BuscarPorID(uint64(id))
+	if err != nil {
+		respostas.Erro(w, http.StatusInternalServerError, err)
+		return
+	}
+
+	respostas.JSON(w, http.StatusOK, usuario)
 
 }
 
