@@ -116,3 +116,8 @@ func (repositorio usuarios) DeletarUsuarioPorID(id uint64) error {
 
 	return nil
 }
+
+// Busca usuário por email
+func (repositorio usuarios) BuscarUsuarioPorEmail(email string) (models.Usuario, error) {
+
+}
