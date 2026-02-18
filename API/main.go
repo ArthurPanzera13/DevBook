@@ -15,6 +15,7 @@ func main() {
 
 	fmt.Println(config.Porta)
 	fmt.Println(config.StringConexaoBancoDeDados)
+	fmt.Println(config.SecretKey)
 
 	fmt.Printf("RODANDO A API")
 
