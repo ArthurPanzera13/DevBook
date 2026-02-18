@@ -5,7 +5,9 @@ import (
 	"api/src/models"
 	"api/src/repository"
 	"api/src/respostas"
+	"api/src/security"
 	"encoding/json"
+	"fmt"
 	"io"
 	"net/http"
 )
@@ -35,4 +37,18 @@ func Login(w http.ResponseWriter, r *http.Request) {
 
 	repositorio := repository.NovoRepositorioDeUsuarios(db)
 	usuarioEncontrado, err := repositorio.BuscarUsuarioPorEmail(usuario.Email)
+
+	if err != nil {
+		respostas.Erro(w, http.StatusInternalServerError, err)
+		return
+	}
+
+	fmt.Println(usuarioEncontrado)
+
+	if err = security.VerificarSenha(usuario.Senha, usuarioEncontrado.Senha); err != nil {
+		respostas.Erro(w, http.StatusUnauthorized, err)
+		return
+	}
+
+	w.Write([]byte("Login efetuado com sucesso"))
 }
