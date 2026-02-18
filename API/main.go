@@ -13,10 +13,6 @@ func main() {
 
 	config.Carregar()
 
-	fmt.Println(config.Porta)
-	fmt.Println(config.StringConexaoBancoDeDados)
-	fmt.Println(config.SecretKey)
-
 	fmt.Printf("RODANDO A API")
 
 	r := router.Gerar()

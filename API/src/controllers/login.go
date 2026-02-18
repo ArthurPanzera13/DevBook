@@ -53,7 +53,11 @@ func Login(w http.ResponseWriter, r *http.Request) {
 
 	w.Write([]byte("Login efetuado com sucesso"))
 
-	token, _ := authentication.CriarToken(int64(usuarioEncontrado.ID))
-	fmt.Println(token)
+	token, err := authentication.CriarToken(int64(usuarioEncontrado.ID))
+
+	if err != nil {
+		respostas.Erro(w, http.StatusInternalServerError, err)
+	}
+
 	w.Write([]byte(token))
 }
