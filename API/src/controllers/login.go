@@ -51,8 +51,6 @@ func Login(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	w.Write([]byte("Login efetuado com sucesso"))
-
 	token, err := authentication.CriarToken(int64(usuarioEncontrado.ID))
 
 	if err != nil {
