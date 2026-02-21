@@ -1,11 +1,13 @@
 package controllers
 
 import (
+	"api/src/authentication"
 	"api/src/banco"
 	"api/src/models"
 	"api/src/repository"
 	"api/src/respostas"
 	"encoding/json"
+	"errors"
 	"io"
 	"net/http"
 	"strconv"
@@ -114,6 +116,17 @@ func AtualizarUsuario(w http.ResponseWriter, r *http.Request) {
 	id, err := strconv.ParseInt(parametros["usuarioId"], 10, 32)
 	if err != nil {
 		respostas.Erro(w, http.StatusInternalServerError, err)
+		return
+	}
+
+	usuarioIDNoToken, err := authentication.ExtrairUsuarioID(r)
+	if err != nil {
+		respostas.Erro(w, http.StatusUnauthorized, err)
+		return
+	}
+
+	if usuarioIDNoToken != uint64(id) {
+		respostas.Erro(w, http.StatusForbidden, errors.New("Você não tem permissão para atualizar este usuário"))
 		return
 	}
 
