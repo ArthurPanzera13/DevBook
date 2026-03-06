@@ -138,3 +138,20 @@ func (repositorio usuarios) BuscarUsuarioPorEmail(email string) (models.Usuario,
 	return usuario, nil
 
 }
+
+// Deletar usuário por ID
+func (repositorio usuarios) SeguirUsuario(usuario_id uint64, seguidor_id uint64) error {
+	statemant, err := repositorio.db.Prepare("INSERT INTO SEGUIDORES (usuario_id, seguidor_id) VALUES (?, ?)")
+	if err != nil {
+		return err
+	}
+
+	defer statemant.Close()
+
+	_, err = statemant.Exec(usuario_id, seguidor_id)
+	if err != nil {
+		return err
+	}
+
+	return nil
+}

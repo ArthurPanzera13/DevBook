@@ -47,7 +47,7 @@ func Login(w http.ResponseWriter, r *http.Request) {
 	fmt.Println(usuarioEncontrado)
 
 	if err = security.VerificarSenha(usuario.Senha, usuarioEncontrado.Senha); err != nil {
-		respostas.Erro(w, http.StatusUnauthorized, err)
+		respostas.Erro(w, http.StatusUnauthorized, fmt.Errorf("email ou senha inválidos"))
 		return
 	}
 
