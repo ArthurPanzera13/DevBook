@@ -155,3 +155,45 @@ func (repositorio usuarios) SeguirUsuario(usuario_id uint64, seguidor_id uint64)
 
 	return nil
 }
+
+func (repositorio usuarios) DeixarDeSeguirUsuario(usuario_id uint64, seguidor_id uint64) error {
+	statemant, err := repositorio.db.Prepare("DELETE FROM SEGUIDORES WHERE usuario_id = ? AND seguidor_id = ?")
+	if err != nil {
+		return err
+	}
+
+	defer statemant.Close()
+
+	_, err = statemant.Exec(usuario_id, seguidor_id)
+	if err != nil {
+		return err
+	}
+
+	return nil
+}
+
+func (repositorio usuarios) BuscarSeguidores(usuario_id uint64) ([]models.Usuario, error) {
+	statemant, err := repositorio.db.Prepare("SELECT u.id, u.nome, u.nickname, u.email FROM USUARIOS u INNER JOIN SEGUIDORES s ON u.id = s.seguidor_id WHERE s.usuario_id = ?")
+	if err != nil {
+		return nil, err
+	}
+
+	defer statemant.Close()
+
+	linhas, err := statemant.Query(uint64(usuario_id))
+	if err != nil {
+		return nil, err
+	}
+
+	var seguidoresRetornados []models.Usuario
+	for linhas.Next() {
+		var seguidor models.Usuario
+		if err = linhas.Scan(&seguidor.ID, &seguidor.Nome, &seguidor.Nick, &seguidor.Email); err != nil {
+			return nil, err
+		}
+
+		seguidoresRetornados = append(seguidoresRetornados, seguidor)
+	}
+
+	return seguidoresRetornados, nil
+}
