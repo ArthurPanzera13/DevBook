@@ -197,3 +197,29 @@ func (repositorio usuarios) BuscarSeguidores(usuario_id uint64) ([]models.Usuari
 
 	return seguidoresRetornados, nil
 }
+
+func (repositorio usuarios) BuscarSeguindo(usuario_id uint64) ([]models.Usuario, error) {
+	statemant, err := repositorio.db.Prepare("SELECT u.id, u.nome, u.nickname, u.email FROM USUARIOS u INNER JOIN SEGUIDORES s ON u.id = s.usuario_id WHERE s.seguidor_id = ?")
+	if err != nil {
+		return nil, err
+	}
+
+	defer statemant.Close()
+
+	linhas, err := statemant.Query(uint64(usuario_id))
+	if err != nil {
+		return nil, err
+	}
+
+	var seguindoRetornados []models.Usuario
+	for linhas.Next() {
+		var seguindo models.Usuario
+		if err = linhas.Scan(&seguindo.ID, &seguindo.Nome, &seguindo.Nick, &seguindo.Email); err != nil {
+			return nil, err
+		}
+
+		seguindoRetornados = append(seguindoRetornados, seguindo)
+	}
+
+	return seguindoRetornados, nil
+}
