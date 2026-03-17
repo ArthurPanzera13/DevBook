@@ -6,6 +6,7 @@ import (
 	"api/src/models"
 	"api/src/repository"
 	"api/src/respostas"
+	"api/src/security"
 	"encoding/json"
 	"errors"
 	"io"
@@ -338,4 +339,72 @@ func BuscarSeguindo(w http.ResponseWriter, r *http.Request) {
 	}
 
 	respostas.JSON(w, http.StatusOK, seguindo)
+}
+
+func AtualizarSenha(w http.ResponseWriter, r *http.Request) {
+	parametros := mux.Vars(r)
+
+	usuarioID, err := strconv.ParseInt(parametros["usuarioId"], 10, 32)
+	if err != nil {
+		respostas.Erro(w, http.StatusBadRequest, err)
+		return
+	}
+
+	usuarioIDNoToken, err := authentication.ExtrairUsuarioID(r)
+	if err != nil {
+		respostas.Erro(w, http.StatusUnauthorized, err)
+		return
+	}
+
+	if uint64(usuarioIDNoToken) != uint64(usuarioID) {
+		respostas.Erro(w, http.StatusForbidden, errors.New("Você não tem permissão para atualizar a senha deste usuário"))
+		return
+	}
+
+	corpoDaRequisicao, err := io.ReadAll(r.Body)
+	if err != nil {
+		respostas.Erro(w, http.StatusUnprocessableEntity, err)
+		return
+	}
+
+	var senha models.Senha
+	if err = json.Unmarshal(corpoDaRequisicao, &senha); err != nil {
+		respostas.Erro(w, http.StatusBadRequest, err)
+		return
+	}
+
+	db, err := banco.Conectar()
+	if err != nil {
+		respostas.Erro(w, http.StatusInternalServerError, err)
+		return
+	}
+
+	defer db.Close()
+
+	repositorio := repository.NovoRepositorioDeUsuarios(db)
+
+	//Busca a senha atual do usuário no banco de dados
+	senhaAtual, err := repositorio.BuscarSenhaUsuario(uint64(usuarioID))
+	if err != nil {
+		respostas.Erro(w, http.StatusInternalServerError, err)
+		return
+	}
+
+	if err = security.VerificarSenha(senha.SenhaAtual, senhaAtual); err != nil {
+		respostas.Erro(w, http.StatusUnauthorized, errors.New("A senha atual inserida é inválida"))
+		return
+	}
+
+	senhaHash, err := security.Hash(senha.NovaSenha)
+	if err != nil {
+		respostas.Erro(w, http.StatusBadRequest, err)
+		return
+	}
+
+	if err = repositorio.AtualizarSenha(uint64(usuarioID), string(senhaHash)); err != nil {
+		respostas.Erro(w, http.StatusInternalServerError, err)
+		return
+	}
+
+	respostas.JSON(w, http.StatusNoContent, nil)
 }
